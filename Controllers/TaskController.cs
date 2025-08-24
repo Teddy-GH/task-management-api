@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using task_management_system.Dto;
+using task_management_system.Hubs;
 using task_management_system.Interfaces;
 using task_management_system.Mappers;
 
@@ -11,9 +13,11 @@ namespace task_management_system.Controllers
     public class TaskController : ControllerBase
     {
         private readonly ITaskItemRepository _taskItemRepository;
-        public TaskController(ITaskItemRepository taskItemRepository)
+        private readonly IHubContext<TasksHub, ITasksClientHub> _hub;
+        public TaskController(ITaskItemRepository taskItemRepository, IHubContext<TasksHub, ITasksClientHub> hub)
         {
             _taskItemRepository = taskItemRepository;
+            _hub = hub;
         }
 
         [HttpGet]
@@ -63,8 +67,11 @@ namespace task_management_system.Controllers
 
 
             var taskItemModel = taskItemDto.ToTaskItem();
-            await _taskItemRepository.CreateTaskItem(taskItemModel);
-            return CreatedAtAction(nameof(GetTaskItem), new { id = taskItemModel.Id }, taskItemModel.ToTaskItemDto());
+            var taskCreatedDto = await _taskItemRepository.CreateTaskItem(taskItemModel);
+
+            await _hub.Clients.All.TaskCreated(taskCreatedDto.ToTaskItemDto());
+
+            return CreatedAtAction(nameof(GetTaskItem), new { id = taskItemModel.Id }, taskCreatedDto);
 
 
         }
@@ -85,6 +92,7 @@ namespace task_management_system.Controllers
             {
                 return NotFound();
             }
+            await _hub.Clients.All.TaskUpdated(taskItemModel.ToTaskItemDto());
 
 
 
@@ -104,6 +112,7 @@ namespace task_management_system.Controllers
             {
                 return NotFound();
             }
+            await _hub.Clients.All.TaskDeleted(id);
 
             return NoContent();
         }
