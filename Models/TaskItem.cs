@@ -1,4 +1,5 @@
-﻿using task_management_system.enums;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using task_management_system.enums;
 
 namespace task_management_system.Models
 {
@@ -7,7 +8,11 @@ namespace task_management_system.Models
         public Guid Id { get; set; }
         public string Title { get; set; } = default!;
         public string? Description { get; set; }
+
+        [Column(TypeName = "text")]
         public Status Status { get; set; } = Status.TODO;
+
+        [Column(TypeName = "text")]
         public TaskPriority Priority { get; set; } = TaskPriority.MEDIUM;
         public string? AssigneeId { get; set; }
         public User? Assignee { get; set; }
