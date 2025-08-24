@@ -15,6 +15,7 @@ namespace task_management_system.Mappers
                 Status = taskModel.Status,
                 Priority = taskModel.Priority,
                 AssigneeId = taskModel.AssigneeId,
+                Assignee = taskModel.Assignee?.ToUserDto(),
                 CreatorId = taskModel.CreatorId
 
             };

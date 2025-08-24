@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using task_management_system.Dto;
@@ -13,10 +14,30 @@ namespace task_management_system.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
-        public AuthController(UserManager<User> userManager, ITokenService tokenService)
+        private readonly SignInManager<User> _signInManager;
+        public AuthController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager)
         {
             _userManager = userManager;
             _tokenService = tokenService;
+            _signInManager = signInManager;
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetAllUsers()
+        {
+            var users = _userManager.Users.ToList();
+
+            var userDtos = users.Select(u => new UserResponseDto
+            {
+                Id = Guid.Parse(u.Id),
+                UserName = u.UserName,
+                Email = u.Email,
+                Role = u.Role,
+                CreatedAt = u.CreatedAt
+            }).ToList();
+
+            return Ok(userDtos);
         }
 
         [HttpPost("register")]
@@ -59,6 +80,44 @@ namespace task_management_system.Controllers
             {
                 return StatusCode(500, ex);
 
+            }
+        }
+
+
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(ModelState);
+
+                var user = await _userManager.FindByNameAsync(loginDto.Username);
+
+                if (user == null)
+                    return Unauthorized("Invalid username or password");
+
+           
+                var signInResponse = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
+
+                if (!signInResponse.Succeeded)
+                    return Unauthorized("Incorrect username or password");
+
+                return Ok(
+
+                    new LoginResponseDto
+                    {
+                        UserName = user.UserName,
+                        Email = user.Email,
+                        Token = _tokenService.CreateToken(user)
+                    }
+
+                    );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex);
             }
         }
     }

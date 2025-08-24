@@ -16,6 +16,28 @@ namespace task_management_system.Controllers
             _taskItemRepository = taskItemRepository;
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAllTaskItems([FromQuery] TaskStatus? status, [FromQuery] Guid? assignee)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var taskItems = await _taskItemRepository.GetAllTasks();
+
+            if (status.HasValue)
+                taskItems = taskItems.Where(t => (TaskStatus)t.Status == status.Value).ToList();
+
+            if (assignee.HasValue)
+            taskItems = taskItems.Where(t => t.AssigneeId == assignee.Value.ToString()).ToList();
+
+            var taskItemDtos = taskItems.OrderByDescending(t => t.UpdatedAt).Select(t => t.ToTaskItemDto());
+
+            return Ok(taskItemDtos);
+        }
+
+
+
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTaskItem([FromRoute] Guid id)
         {

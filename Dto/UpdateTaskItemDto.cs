@@ -13,8 +13,8 @@ namespace task_management_system.Dto
         public string? Description { get; set; }
         public Status Status { get; set; } = Status.TODO;
         public TaskPriority Priority { get; set; } = TaskPriority.MEDIUM;
-        public Guid? AssigneeId { get; set; }
-        public Guid UpdatorId { get; set; }
+        public string? AssigneeId { get; set; }
+        public string? UpdatorId { get; set; }
         public User UpdatedBy { get; set; } = default!;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     }
