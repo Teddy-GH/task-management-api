@@ -65,7 +65,7 @@ namespace task_management_system.Repository
             existingTaskItem.Priority = updateTaskItemDto.Priority;
             existingTaskItem.AssigneeId = updateTaskItemDto.AssigneeId;
             existingTaskItem.CreatorId = updateTaskItemDto.UpdatorId;
-            existingTaskItem.CreatedBy = updateTaskItemDto.UpdatedBy;
+            //existingTaskItem.CreatedBy = updateTaskItemDto.UpdatedBy;
             existingTaskItem.CreatedAt = updateTaskItemDto.UpdatedAt;
 
             await _taskManagementContext.SaveChangesAsync();

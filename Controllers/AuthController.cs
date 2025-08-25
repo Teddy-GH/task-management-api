@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using task_management_system.Dto;
 using task_management_system.Interfaces;
 using task_management_system.Models;
@@ -15,6 +16,9 @@ namespace task_management_system.Controllers
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
         private readonly SignInManager<User> _signInManager;
+
+        public object Int { get; private set; }
+
         public AuthController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager)
         {
             _userManager = userManager;
@@ -22,8 +26,8 @@ namespace task_management_system.Controllers
             _signInManager = signInManager;
         }
 
-        [HttpGet]
-        [Authorize]
+        [HttpGet("users")]
+        //[Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> GetAllUsers()
         {
             var users = _userManager.Users.ToList();
@@ -39,6 +43,7 @@ namespace task_management_system.Controllers
 
             return Ok(userDtos);
         }
+
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
@@ -98,28 +103,31 @@ namespace task_management_system.Controllers
                 if (user == null)
                     return Unauthorized("Invalid username or password");
 
-           
                 var signInResponse = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
                 if (!signInResponse.Succeeded)
                     return Unauthorized("Incorrect username or password");
 
-                return Ok(
+       
 
-                    new LoginResponseDto
-                    {
-                        UserName = user.UserName,
-                        Email = user.Email,
-                        Token = _tokenService.CreateToken(user)
-                    }
-
-                    );
+                return Ok(new LoginResponseDto
+                {
+                    Id = user.Id.ToString(),  
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    Token = await _tokenService.CreateToken(user),
+                    CreatedAt = user.CreatedAt,  
+                    Role = user.Role.ToString()
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, ex);
+                return StatusCode(500, new { error = ex.Message });
             }
         }
+
     }
 }
+
+
 

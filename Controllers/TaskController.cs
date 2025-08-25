@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using task_management_system.Dto;
+using task_management_system.enums;
 using task_management_system.Hubs;
 using task_management_system.Interfaces;
 using task_management_system.Mappers;
@@ -21,7 +23,7 @@ namespace task_management_system.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllTaskItems([FromQuery] TaskStatus? status, [FromQuery] Guid? assignee)
+        public async Task<IActionResult> GetAllTaskItems([FromQuery] Status? status, [FromQuery] Guid? assignee)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -29,7 +31,7 @@ namespace task_management_system.Controllers
             var taskItems = await _taskItemRepository.GetAllTasks();
 
             if (status.HasValue)
-                taskItems = taskItems.Where(t => (TaskStatus)t.Status == status.Value).ToList();
+                taskItems = taskItems.Where(t =>t.Status == status.Value).ToList();
 
             if (assignee.HasValue)
             taskItems = taskItems.Where(t => t.AssigneeId == assignee.Value.ToString()).ToList();
@@ -101,6 +103,7 @@ namespace task_management_system.Controllers
 
         [HttpDelete]
         [Route("{id}")]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> DeleteTAskItem([FromRoute] Guid id)
         {
             if (!ModelState.IsValid)
